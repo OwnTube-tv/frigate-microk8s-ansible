@@ -90,12 +90,30 @@ internet → ranchen.owntube.se (87.251.30.65) → router port-forward 443/80
 ### Deployment Phases
 
 - **`0-bootstrap.yml`** — server baseline: sysadmin/service accounts, SSH hardening,
-  Europe/Stockholm timezone, base packages (via the `common` role)
-- _Planned:_ MicroK8s installation and add-on configuration (`dns`, `hostpath-storage`,
-  `ingress`, `cert-manager`), then the Frigate Kubernetes deployment (namespace, ConfigMap,
-  Deployment with `/dev/dri` access and memory-backed `/dev/shm`, Service, Ingress)
+  Europe/Stockholm timezone + en_US.UTF-8 locale, base packages (`common` role), plus MicroK8s
+  snap installation, kubectl alias and group membership (`microk8s-node` role)
+- **`1-microk8s-cluster.yml`** — enables MicroK8s add-ons (dns, hostpath-storage, ingress,
+  cert-manager, metrics-server, host-access, helm/helm3 — deliberately **no dashboard**;
+  helm comes pre-enabled in the MicroK8s snap either way) and configures host-local
+  kubectl/k9s access for admin users (`microk8s-cluster` role)
+- _Planned:_ the Frigate Kubernetes deployment (namespace, ConfigMap, Deployment with `/dev/dri`
+  access and memory-backed `/dev/shm`, Service, Ingress) together with the Let's Encrypt
+  ClusterIssuer — **deferred until the server is physically at a264**, since ACME HTTP-01
+  requires the site's inbound 80/443 path. Do not create issuers or TLS ingresses before then.
 
 ### Role Structure
+
+**`microk8s-node`** and **`microk8s-cluster`** are deliberately kept file-diffable against their
+minio-microk8s-ansible counterparts — same task logic, with single-node behavior falling out of
+the inventory (a one-host group makes the designated-master expression pick the only node and
+empties every "other nodes" loop). The meaningful deltas are:
+- `microk8s-node`: the clustering-instructions task is gated on the inventory group holding
+  more than one host
+- `microk8s-cluster`: role defaults stay minio-identical — the site's choices live in
+  `1-microk8s-cluster.yml`, which passes a `microk8s_plugins` override (dashboard off) and
+  the task toggles `create_letsencrypt_issuer: no` / `create_dashboard_ingress: no`
+  taking precedence over role defaults. Flip `create_letsencrypt_issuer` to `yes` in the
+  playbook once the server is on-site at a264 — never before.
 
 **`common`** — same baseline as in minio-microk8s-ansible:
 - Configures sysadmin accounts and Ansible service account with SSH key authentication
