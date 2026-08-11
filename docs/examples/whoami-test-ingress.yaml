@@ -1,0 +1,68 @@
+# Temporary end-to-end test of the public ingress chain:
+#   internet → ranchen.owntube.se (Starlink IP) → router port-forward 443/80
+#   → MicroK8s nginx ingress → cert-manager/Let's Encrypt TLS → whoami pod
+#
+# The whoami container echoes back the request (headers, proto, source),
+# which proves header forwarding through the ingress. Remove when the
+# Frigate deployment takes over the ranchen.owntube.se hostname:
+#
+#   microk8s kubectl delete -f whoami-test-ingress.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: default
+  labels:
+    app: whoami
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.10
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  selector:
+    app: whoami
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: public
+  tls:
+    - hosts: [ranchen.owntube.se]
+      secretName: ranchen-tls
+  rules:
+    - host: ranchen.owntube.se
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
