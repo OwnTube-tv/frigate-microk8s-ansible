@@ -27,6 +27,30 @@
     state: present
   tags: microk8s-cluster
 
+# Calico runs an address autodetection of its own, independent of the kubelet
+# one pinned in the microk8s-node role, and can reach a different conclusion.
+# Confining it to the node network removes the third guess. Leave the variable
+# unset on hosts with a single network path, where guessing cannot go wrong.
+- name: Pin the Calico address autodetection to the node network
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: calico-node
+        namespace: kube-system
+      spec:
+        template:
+          spec:
+            containers:
+              - name: calico-node
+                env:
+                  - name: IP_AUTODETECTION_METHOD
+                    value: "{{ calico_ip_autodetection_method }}"
+  when: calico_ip_autodetection_method | length > 0
+  tags: microk8s-cluster
+
 - name: Create ingress for Kubernetes Dashboard, https://k8s-dashboard.owntube.tv
   kubernetes.core.k8s:
     definition: "{{ lookup('file', 'k8s-dashboard-ingress.yml') | from_yaml }}"
