@@ -15,6 +15,14 @@ mqtt:
 tls:
   enabled: false
 
+ui:
+  # Explicit 24-hour time. Works around upstream Frigate 0.17 bugs: the
+  # timeline falls back to the i18n "12hour" format strings whenever this is
+  # not exactly "24hour", and the Swedish 12-hour strings contain an unescaped
+  # "kl." literal that makes date-fns throw ("Invalid time" across the review
+  # timeline). Tracked in issue #5.
+  time_format: 24hour
+
 detectors:
   ov:
     type: openvino
@@ -37,6 +45,10 @@ go2rtc:
       - rtsp://{{ frigate_camera_username }}:{{ frigate_camera_password }}@{{ frigate_camera_host }}:554/h264Preview_01_main
     trackmix_wide_sub:
       - rtsp://{{ frigate_camera_username }}:{{ frigate_camera_password }}@{{ frigate_camera_host }}:554/h264Preview_01_sub
+    trackmix_tele:
+      - rtsp://{{ frigate_camera_username }}:{{ frigate_camera_password }}@{{ frigate_camera_host }}:554/h264Preview_02_main
+    trackmix_tele_sub:
+      - rtsp://{{ frigate_camera_username }}:{{ frigate_camera_password }}@{{ frigate_camera_host }}:554/h264Preview_02_sub
 
 cameras:
   trackmix_wide:
@@ -60,17 +72,45 @@ cameras:
       track: [horse, person, car, dog]
     # Manual PTZ from the Frigate UI (the a264a-frigate-admin camera account
     # has PTZ rights). Frigate's own autotracking stays off — Reolink does not
-    # support ONVIF RelativeMove; the camera's built-in tracking handles that.
+    # support ONVIF RelativeMove.
     onvif:
       host: {{ frigate_camera_host }}
       port: 8000
       user: {{ frigate_camera_username }}
       password: {{ frigate_camera_password }}
 
+  # The telephoto lens (camera channel 2). The camera's own tracking follows
+  # subjects digitally within this frame; it can be configured to drive the
+  # PTZ motors as well, but that is not enabled.
+  # Disabled by default: an enabled camera keeps a capture
+  # process running even with detect and record off, so 'enabled: false' is
+  # what actually costs nothing. Note that Frigate refuses to turn a camera on
+  # at runtime unless it is enabled in the config, so switching this on means
+  # editing this template and re-running the playbook.
+  trackmix_tele:
+    enabled: false
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/trackmix_tele_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+    detect:
+      enabled: false
+      width: 896
+      height: 512
+      fps: 5
+    record:
+      enabled: false
+    objects:
+      track: [horse, person, car, dog]
+
 record:
   enabled: true
-  # No 24/7 recording ('continuous' defaults to 0 days) — motion segments for
-  # 7 days spares the A400; alerts/detections keep their own retention below
+  # 3 days of 24/7 footage (~60 GB/day/4K-stream measured), then motion-only
+  # segments up to 7 days, with event footage kept longest below. Frigate
+  # prunes the oldest material if the disk fills up regardless.
+  continuous:
+    days: 3
   motion:
     days: 7
   alerts:
