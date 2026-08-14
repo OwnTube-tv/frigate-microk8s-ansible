@@ -37,6 +37,25 @@ No UPS protection at the site (yet). Mitigation: the server BIOS is configured w
 filesystem mounts use `nofail` so a degraded disk never blocks boot.
 
 
+SMART Baseline (2026-08-12)
+---------------------------
+
+Baseline readings taken right after the recordings disk was provisioned, before any camera
+recording started — compare against these to track SSD wear under continuous video writes:
+
+| Attribute         | Kingston A400 (`/dev/sda`)          | WD Black SN7100 (`/dev/nvme0`) |
+|-------------------|-------------------------------------|--------------------------------|
+| Power-on hours    | 23                                  | 22                             |
+| Power cycles      | 21                                  | 19                             |
+| Wear indicator    | SSD_Life_Left: 100                  | Percentage Used: 0 %           |
+| Reallocated/spare | 0 events                            | Available Spare: 100 %         |
+| Data written      | n/a (no LBA attr on this Phison fw) | 40.8 GB                        |
+| Temperature       | 33 °C (min/max 18/43)               | 50 °C                          |
+
+Read with `sudo smartctl -a /dev/sda` and `sudo smartctl -a /dev/nvme0` (smartmontools is part
+of the common-role baseline).
+
+
 Server Details for `a264a`
 --------------------------
 

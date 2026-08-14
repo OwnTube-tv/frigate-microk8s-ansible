@@ -1,0 +1,7 @@
+---
+
+- name: Configure Frigate recordings disk
+  import_tasks: frigate-disks.yml
+  tags: frigate-disks
+
+...

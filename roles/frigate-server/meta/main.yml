@@ -1,0 +1,22 @@
+---
+
+galaxy_info:
+  author: mblomdahl
+  description: Provisioning of the Frigate NVR on single-node MicroK8s.
+  company: OwnTube.tv
+
+  license: The Unlicense
+
+  min_ansible_version: 2.16
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - 24.04
+
+  galaxy_tags:
+    - frigate
+
+dependencies: []
+
+...

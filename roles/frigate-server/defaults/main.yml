@@ -1,0 +1,9 @@
+---
+
+frigate_servers_group: all
+
+frigate_vg_device: /dev/sda
+
+frigate_data_mount: /srv/frigate
+
+...
