@@ -1,0 +1,28 @@
+---
+
+- hosts: frigate_microk8s_servers
+  become: yes
+  roles:
+    - role: microk8s-cluster
+      microk8s_servers_group: frigate_microk8s_servers
+      microk8s_users: [ar9708, mblomdahl]
+      # Single-node Frigate host: no dashboard. Precedence over role defaults.
+      # helm/helm3 come pre-enabled in the MicroK8s 1.34 snap and the role is
+      # enable-only — declaring them "yes" matches reality and creates the
+      # helm3 snap alias, same as on the minio nodes.
+      microk8s_plugins:
+        cert-manager: yes
+        dashboard: no
+        dns: yes
+        helm: yes
+        helm3: yes
+        hostpath-storage: yes
+        ingress: yes
+        metrics-server: yes
+        host-access: yes
+      # No ACME issuance until the server is on-site at a264 (HTTP-01 needs the
+      # inbound 80/443 path via the Starlink IP), and no public dashboard at all.
+      create_letsencrypt_issuer: no
+      create_dashboard_ingress: no
+
+...

@@ -1,0 +1,11 @@
+---
+
+- hosts: frigate_microk8s_servers
+  become: yes
+  roles:
+    - common
+    - role: microk8s-node
+      microk8s_servers_group: frigate_microk8s_servers
+      microk8s_users: [ar9708, mblomdahl]
+
+...
