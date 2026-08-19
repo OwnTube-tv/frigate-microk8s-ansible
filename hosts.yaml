@@ -2,12 +2,12 @@
 
 frigate_microk8s_servers:
   hosts:
-    # a264a.mabl.online (f.d. hq.mkdevops.se) — single-node MicroK8s + Frigate NVR
-    # During pre-shipping preparation, override ansible_host with the server's
-    # LAN IP or Tailscale address; on site it is 192.168.5.10 on the VPN-LAN.
+    # a264a.mabl.online — single-node MicroK8s + Frigate NVR at site a264.
+    # Public IP with router port-forward 622 -> 22; on the site-to-site VPN
+    # the server is also reachable as 192.168.5.10:22.
     node-1:
-      ansible_host: a264a.mabl.online
-      ansible_port: 22
+      ansible_host: 87.251.30.65
+      ansible_port: 622
       ansible_user: owntube_ansible
 
 ...
