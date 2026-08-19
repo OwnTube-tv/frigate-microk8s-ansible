@@ -6,4 +6,10 @@ microk8s_servers_group: all
 # Inspired by https://github.com/istvano/ansible_role_microk8s/blob/master/tasks/configure-groups.yml
 microk8s_users: []
 
+# The address Kubernetes should identify this node by. Defaults to the node's
+# own default-route address, which is right whenever the machine has a single
+# network path. Override it per host in the inventory when the machine has
+# more than one — see the note in hosts.yaml.
+microk8s_node_ip: "{{ ansible_default_ipv4.address }}"
+
 ...

@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  namespace: frigate
+  labels:
+    app: frigate
+spec:
+  replicas: 1
+  # Single camera source + RWO config volume — never run two Frigates at once
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frigate
+  template:
+    metadata:
+      labels:
+        app: frigate
+      annotations:
+        # Roll the pod when the rendered configuration changes
+        checksum/config: "{{ frigate_config | hash('sha1') }}"
+    spec:
+      containers:
+        - name: frigate
+          image: ghcr.io/blakeblackshear/frigate:{{ frigate_image_tag }}
+          securityContext:
+            # Required for /dev/dri (VAAPI + OpenVINO) and future Coral USB
+            privileged: true
+          env:
+            - name: TZ
+              value: Europe/Stockholm
+            # Pre-10th-gen Intel (i5-7200U/HD 620) needs the i965 VAAPI driver;
+            # the default iHD driver throws "Failed to sync surface" crashes in
+            # the detect decoder. Per the Frigate hardware acceleration docs.
+            - name: LIBVA_DRIVER_NAME
+              value: i965
+          ports:
+            - containerPort: 8971
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: config-file
+              mountPath: /config/config.yml
+              subPath: config.yml
+              readOnly: true
+            - name: media
+              mountPath: /media/frigate
+            - name: dri
+              mountPath: /dev/dri
+            # Coral-ready: whole USB tree, so the Edge TPU survives its
+            # firmware-load re-enumeration. Harmless while no Coral is plugged.
+            - name: usb
+              mountPath: /dev/bus/usb
+            - name: shm
+              mountPath: /dev/shm
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: frigate-config
+        - name: config-file
+          configMap:
+            name: frigate-config-file
+        - name: media
+          hostPath:
+            path: /srv/frigate
+            type: Directory
+        - name: dri
+          hostPath:
+            path: /dev/dri
+        - name: usb
+          hostPath:
+            path: /dev/bus/usb
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi

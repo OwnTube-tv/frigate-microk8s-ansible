@@ -1,0 +1,21 @@
+---
+
+frigate_servers_group: all
+
+frigate_vg_device: /dev/sda
+
+frigate_data_mount: /srv/frigate
+
+frigate_image_tag: 0.17.2
+
+frigate_camera_host: 192.168.4.6
+
+# Camera credentials come from the Ansible Vault (secrets.yaml)
+frigate_camera_username:
+frigate_camera_password:
+
+# Flip to yes to remove the whoami test deployment and point
+# https://ranchen.owntube.se at Frigate
+frigate_ingress_cutover: no
+
+...
