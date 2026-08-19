@@ -143,8 +143,9 @@ empties every "other nodes" loop). The meaningful deltas are:
 
 - **Secrets management:** all sensitive data in Ansible Vault (`secrets.yaml`). Never commit
   unencrypted secrets or the `.ansible_vault_password` file.
-- **Admin access:** SSH via Tailscale or the site-to-site VPN — no SSH port forwarding on the WAN.
-  Only 443/80 are forwarded (to the ingress).
+- **Admin access:** SSH is reachable via the public IP (`87.251.30.65`) on port 622 (router
+  port-forward 622→22), or via the site-to-site VPN at `192.168.5.10:22`. Ports 443/80 are
+  forwarded to the MicroK8s ingress.
 - **Web service posture:** the Frigate UI is deliberately availability-first (PoC/demo purpose)
   with Frigate's built-in authentication — a shared viewer account for demos plus personal
   admin accounts.
