@@ -8,11 +8,28 @@ frigate_data_mount: /srv/frigate
 
 frigate_image_tag: 0.17.2
 
-frigate_camera_host: 192.168.4.6
+# The three site cameras, all on the default LAN (192.168.4.0/24). Numbered
+# rather than named after where they point: re-aiming or swapping a camera
+# then never forces a vault edit, because the mounting position lives in the
+# Frigate configuration while the credentials stay under the same number.
+#
+#   1 — Reolink TrackMix P760  "Back Yard TrackMix NE"
+#   2 — Reolink Duo 2          "Driveway Duo 2 W"
+#   3 — Reolink Duo 2V         "Back Yard Duo 2V E"
+frigate_camera_1_host: 192.168.4.6
+frigate_camera_2_host: 192.168.4.12
+frigate_camera_3_host: 192.168.4.13
 
-# Camera credentials come from the Ansible Vault (secrets.yaml)
-frigate_camera_username:
-frigate_camera_password:
+# Camera credentials come from the Ansible Vault (secrets.yaml). Every camera
+# carries its own pair because each Reolink keeps a separate user database —
+# the same account name provisioned three times is still three accounts, and
+# one of them can have its password rotated without touching the others.
+frigate_camera_1_username:
+frigate_camera_1_password:
+frigate_camera_2_username:
+frigate_camera_2_password:
+frigate_camera_3_username:
+frigate_camera_3_password:
 
 # Flip to yes to remove the whoami test deployment and point
 # https://ranchen.owntube.se at Frigate
