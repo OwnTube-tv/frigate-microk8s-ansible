@@ -45,22 +45,25 @@ go2rtc:
   #
   # The main stream carries the 'record' role. It is stream-copied to disk and
   # never decoded, so its resolution drives disk usage and nothing else — that
-  # is the stream the ~2.5 GB/h measurement is about. All three main streams
-  # are HEVC, probed 2026-08-27, camera 1 included and therefore since before
-  # the cutover. Frigate plays HEVC recordings back in Chrome 108+, Edge and
+  # is the stream the ~2.5 GB/h measurement is about. All four main streams
+  # are HEVC, probed 2026-08-27 and 2026-09-01 for camera 4, camera 1 included and
+  # therefore since before the cutover. Frigate plays HEVC recordings back in Chrome 108+, Edge and
   # Safari only, which the TrackMix footage has been quietly proving is
   # good enough here for two weeks.
   #
   # The substream carries 'detect' and is the only one decoded, on the iGPU,
   # for motion and object detection. Its resolution is therefore what sets the
-  # decode load and the /dev/shm budget: 32 MB across these three substreams,
-  # against 312 MB if detection ran on the main streams instead — on a
-  # 4-thread i5-7200U that also has to encode nothing and decode everything.
-  # All three substreams are H.264, so the i965 VAAPI driver this box is
-  # pinned to never has to decode HEVC at all.
+  # decode load and the /dev/shm budget: 32 MB across the three substreams
+  # measured 2026-08-27, against 312 MB if detection ran on the main streams
+  # instead — on a 4-thread i5-7200U that also has to encode nothing and
+  # decode everything. Camera 4 adds roughly what camera 3 does, being the
+  # same model at the same 1920x576 substream, which leaves the 512Mi
+  # allocation an order of magnitude clear. All four substreams are H.264, so
+  # the i965 VAAPI driver this box is pinned to never has to decode HEVC at
+  # all.
   #
   # Every stream, main and sub, carries AAC audio — measured, not assumed,
-  # which is what makes preset-record-generic-audio-aac right on all three.
+  # which is what makes preset-record-generic-audio-aac right on all four.
   #
   # This is also why both resolutions get recorded below rather than just the
   # main ones: boxes are found on the substream and drawn over the main.
@@ -76,7 +79,7 @@ go2rtc:
     trackmix_tele_sub:
       - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/h264Preview_02_sub
 
-    # Cameras 2 and 3 — Reolink Duo 2 and Duo 2V. Unlike the TrackMix these
+    # Cameras 2, 3 and 4 — Reolink Duo 2 and two Duo 2V. Unlike the TrackMix these
     # stitch both lenses into one panoramic image carried on channel 01, so
     # each is a single stream pair and a single Frigate camera.
     #
@@ -94,6 +97,10 @@ go2rtc:
       - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_main
     back_yard_duo_2v_e_sub:
       - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_sub
+    back_yard_duo_2v_n:
+      - rtsp://{{ frigate_camera_4_username }}:{{ frigate_camera_4_password }}@{{ frigate_camera_4_host }}:554/Preview_01_main
+    back_yard_duo_2v_n_sub:
+      - rtsp://{{ frigate_camera_4_username }}:{{ frigate_camera_4_password }}@{{ frigate_camera_4_host }}:554/Preview_01_sub
 
 cameras:
   # A camera's key must match ^[a-zA-Z0-9_-]+$, and with nothing else set
@@ -219,6 +226,34 @@ cameras:
           input_args: preset-rtsp-restream
           roles: [record]
         - path: rtsp://127.0.0.1:8554/driveway_duo_2_w_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+    detect:
+      enabled: true
+      fps: 5
+    objects:
+      track: [horse, person, car, dog]
+
+  # Camera 4 — the paddock, facing north. Mounted on a 2 m galvanised tube
+  # clamped to the east corner post of the shipping container that stands
+  # along the workshop's north wall, so the lens clears the container instead
+  # of looking at it: from the north wall itself the container blanks
+  # everything out to roughly 9 m, which is the strip where the horses shelter.
+  #
+  # Same fixed dual-lens panorama as camera 3 and the same reasons apply — no
+  # onvif block, and detect geometry read off the stream. Probed 2026-09-01: the two
+  # are identical stream for stream, 5120x1552 at 8 fps and 3072 kbps main,
+  # 1920x576 at 10 fps and 1024 kbps sub.
+  back_yard_duo_2v_n:
+    friendly_name: Back Yard Duo 2V N
+    ffmpeg:
+      output_args:
+        record: preset-record-generic-audio-aac
+      inputs:
+        - path: rtsp://127.0.0.1:8554/back_yard_duo_2v_n
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/back_yard_duo_2v_n_sub
           input_args: preset-rtsp-restream
           roles: [detect]
     detect:
