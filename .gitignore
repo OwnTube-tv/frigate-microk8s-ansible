@@ -7,4 +7,6 @@
 
 venv/
 *.local*
+.local/
+.tmp/
 .ansible_vault_password

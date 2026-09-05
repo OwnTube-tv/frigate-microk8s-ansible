@@ -2,8 +2,12 @@
 
 # The credentials are declared but empty in the role defaults, so a run that
 # forgets the vault renders the literal "None" into every RTSP URL and leaves
-# Frigate up with four dead streams and nothing in the Ansible output to say
-# why. Fail here instead, before anything reaches the cluster.
+# Frigate up with dead streams and nothing in the Ansible output to say why.
+# Fail here instead, before anything reaches the cluster.
+#
+# The loop has to list every camera. It was written for three and did not grow
+# with cameras 4 and 5, which left the guard silently absent for exactly the
+# two newest cameras — the ones most likely to be missing from a vault.
 - name: Assert that every camera has credentials from the vault
   ansible.builtin.assert:
     that:
@@ -14,7 +18,7 @@
       '-e @secrets.yaml', and check that it defines
       frigate_camera_{{ item }}_username and frigate_camera_{{ item }}_password.
     quiet: yes
-  loop: [1, 2, 3]
+  loop: [1, 2, 3, 4, 5]
   tags: frigate-k8s
 
 - name: Create 'frigate' namespace

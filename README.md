@@ -59,5 +59,15 @@ The initial setup steps for a live deployment are as follows:
     kubectl get nodes -o wide
     ```
 
-_Further playbooks to follow: the Frigate Kubernetes deployment with Let's Encrypt TLS, deferred
-until the server is on-site at a264 (ACME HTTP-01 needs the site's inbound 80/443 path)._
+3. Run the `2-frigate-server.yml` playbook to deploy Frigate itself — the namespace, the rendered
+   ConfigMap, the Deployment with `/dev/dri` access and memory-backed `/dev/shm`, the Service and
+   the TLS ingress. Camera credentials live in the Ansible Vault and are not referenced by the
+   playbook, so they have to be passed in:
+
+    ```shell
+    ansible-playbook 2-frigate-server.yml -e @secrets.yaml
+    ```
+
+    The web UI is then served at https://ranchen.owntube.se/ behind Frigate's own authentication.
+    Five Reolink PoE cameras feed it; their encoder settings live on the cameras themselves rather
+    than in Ansible, and are written down in [docs/hardware.md](docs/hardware.md).
