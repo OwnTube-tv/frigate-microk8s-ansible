@@ -45,8 +45,8 @@ go2rtc:
   #
   # The main stream carries the 'record' role. It is stream-copied to disk and
   # never decoded, so its resolution drives disk usage and nothing else — that
-  # is the stream the ~2.5 GB/h measurement is about. All four main streams
-  # are HEVC, probed 2026-08-27 and 2026-09-01 for camera 4, camera 1 included and
+  # is the stream the ~2.5 GB/h measurement is about. All five main streams
+  # are HEVC, probed 2026-08-27 and 2026-09-01 for camera 3, camera 5 included and
   # therefore since before the cutover. Frigate plays HEVC recordings back in Chrome 108+, Edge and
   # Safari only, which the TrackMix footage has been quietly proving is
   # good enough here for two weeks.
@@ -56,30 +56,30 @@ go2rtc:
   # decode load and the /dev/shm budget: 32 MB across the three substreams
   # measured 2026-08-27, against 312 MB if detection ran on the main streams
   # instead — on a 4-thread i5-7200U that also has to encode nothing and
-  # decode everything. Camera 4 adds roughly what camera 3 does, being the
+  # decode everything. Camera 3 adds roughly what camera 2 does, being the
   # same model at the same 1920x576 substream, which leaves the 512Mi
-  # allocation an order of magnitude clear. All four substreams are H.264, so
+  # allocation an order of magnitude clear. All five substreams are H.264, so
   # the i965 VAAPI driver this box is pinned to never has to decode HEVC at
   # all.
   #
   # Every stream, main and sub, carries AAC audio — measured, not assumed,
-  # which is what makes preset-record-generic-audio-aac right on all four.
+  # which is what makes preset-record-generic-audio-aac right on all five.
   #
   # This is also why both resolutions get recorded below rather than just the
   # main ones: boxes are found on the substream and drawn over the main.
   streams:
-    # Camera 1 — Reolink TrackMix P760. Its two lenses are independent
+    # Camera 5 — Reolink TrackMix P760. Its two lenses are independent
     # channels: 01 is the wide lens, 02 the telephoto.
     trackmix_wide:
-      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/h264Preview_01_main
+      - rtsp://{{ frigate_camera_5_username }}:{{ frigate_camera_5_password }}@{{ frigate_camera_5_host }}:554/h264Preview_01_main
     trackmix_wide_sub:
-      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/h264Preview_01_sub
+      - rtsp://{{ frigate_camera_5_username }}:{{ frigate_camera_5_password }}@{{ frigate_camera_5_host }}:554/h264Preview_01_sub
     trackmix_tele:
-      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/h264Preview_02_main
+      - rtsp://{{ frigate_camera_5_username }}:{{ frigate_camera_5_password }}@{{ frigate_camera_5_host }}:554/h264Preview_02_main
     trackmix_tele_sub:
-      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/h264Preview_02_sub
+      - rtsp://{{ frigate_camera_5_username }}:{{ frigate_camera_5_password }}@{{ frigate_camera_5_host }}:554/h264Preview_02_sub
 
-    # Cameras 2, 3 and 4 — Reolink Duo 2 and two Duo 2V. Unlike the TrackMix these
+    # Cameras 1, 2 and 3 — Reolink Duo 2 and two Duo 2V. Unlike the TrackMix these
     # stitch both lenses into one panoramic image carried on channel 01, so
     # each is a single stream pair and a single Frigate camera.
     #
@@ -90,16 +90,29 @@ go2rtc:
     # HEVC stream. The bare form is preferred for not claiming a codec the
     # camera is not sending — not because the prefixed one would fail.
     driveway_duo_2_w:
-      - rtsp://{{ frigate_camera_2_username }}:{{ frigate_camera_2_password }}@{{ frigate_camera_2_host }}:554/Preview_01_main
+      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/Preview_01_main
     driveway_duo_2_w_sub:
-      - rtsp://{{ frigate_camera_2_username }}:{{ frigate_camera_2_password }}@{{ frigate_camera_2_host }}:554/Preview_01_sub
+      - rtsp://{{ frigate_camera_1_username }}:{{ frigate_camera_1_password }}@{{ frigate_camera_1_host }}:554/Preview_01_sub
     back_yard_duo_2v_e:
-      - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_main
+      - rtsp://{{ frigate_camera_2_username }}:{{ frigate_camera_2_password }}@{{ frigate_camera_2_host }}:554/Preview_01_main
     back_yard_duo_2v_e_sub:
-      - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_sub
+      - rtsp://{{ frigate_camera_2_username }}:{{ frigate_camera_2_password }}@{{ frigate_camera_2_host }}:554/Preview_01_sub
     back_yard_duo_2v_n:
-      - rtsp://{{ frigate_camera_4_username }}:{{ frigate_camera_4_password }}@{{ frigate_camera_4_host }}:554/Preview_01_main
+      - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_main
     back_yard_duo_2v_n_sub:
+      - rtsp://{{ frigate_camera_3_username }}:{{ frigate_camera_3_password }}@{{ frigate_camera_3_host }}:554/Preview_01_sub
+
+    # Camera 4 — a second TrackMix P760, so channel 01 is again the wide lens
+    # and 02 the telephoto. Only 01 is published: the telephoto is idle here.
+    #
+    # Uses the bare "Preview_01_*" form rather than camera 5's "h264Preview_".
+    # Probed 2026-09-04: on this model too the prefix is decorative — both
+    # spellings return the same HEVC main stream — so the bare one is used for
+    # not claiming a codec the camera is not sending. Camera 5 keeps the
+    # prefixed form only because changing it would be churn for no gain.
+    corner_trackmix_se_wide:
+      - rtsp://{{ frigate_camera_4_username }}:{{ frigate_camera_4_password }}@{{ frigate_camera_4_host }}:554/Preview_01_main
+    corner_trackmix_se_wide_sub:
       - rtsp://{{ frigate_camera_4_username }}:{{ frigate_camera_4_password }}@{{ frigate_camera_4_host }}:554/Preview_01_sub
 
 cameras:
@@ -108,13 +121,13 @@ cameras:
   # "Trackmix Wide" in the UI. 'friendly_name' is what carries the real label,
   # spaces and capitalisation included.
   #
-  # It is also why camera 1 keeps its original key. The key names the
+  # It is also why camera 5 keeps its original key. The key names the
   # recording directories under /media/frigate/recordings and is what every
   # event row in the database points at, so renaming it would orphan
   # everything recorded since the cutover on 2026-08-13. The label moves; the
   # key stays.
   #
-  # Camera 1's wide channel is off. Not a capacity measure — the two Duo
+  # Camera 5's wide channel is off. Not a capacity measure — the two Duo
   # panoramas overlap and cover this view between them, so a third wide angle
   # records nothing that is not already held from two other directions. What
   # the TrackMix contributes now is the telephoto channel below.
@@ -148,12 +161,12 @@ cameras:
     # has PTZ rights). Frigate's own autotracking stays off — Reolink does not
     # support ONVIF RelativeMove.
     onvif:
-      host: {{ frigate_camera_1_host }}
+      host: {{ frigate_camera_5_host }}
       port: 8000
-      user: {{ frigate_camera_1_username }}
-      password: {{ frigate_camera_1_password }}
+      user: {{ frigate_camera_5_username }}
+      password: {{ frigate_camera_5_password }}
 
-  # Camera 1's telephoto channel — an 8 mm lens at 38 degrees against the wide
+  # Camera 5's telephoto channel — an 8 mm lens at 38 degrees against the wide
   # channel's 2.8 mm at 96. It records in its own right now that the two Duo
   # panoramas overlap and cover the overview between them, which frees the
   # TrackMix to be the detail camera rather than a third wide view.
@@ -188,33 +201,36 @@ cameras:
     objects:
       track: [horse, person, car, dog]
     onvif:
-      host: {{ frigate_camera_1_host }}
+      host: {{ frigate_camera_5_host }}
       port: 8000
-      user: {{ frigate_camera_1_username }}
-      password: {{ frigate_camera_1_password }}
+      user: {{ frigate_camera_5_username }}
+      password: {{ frigate_camera_5_password }}
 
-  # Camera 2 — the driveway, facing west. Fixed lenses, so there is no onvif
+  # Camera 1 — the driveway, facing west. Fixed lenses, so there is no onvif
   # block: that section exists for PTZ control and there is nothing to move.
   #
-  # detect.width/height stay unset here and on camera 3 — Frigate reads the
-  # geometry off the stream instead. All three cameras measured 2026-08-27:
+  # detect.width/height stay unset here and on every camera added since —
+  # Frigate reads the geometry off the stream instead. Measured 2026-08-27,
+  # camera 3 on 2026-09-01 and camera 4 on 2026-09-04:
   #
   #                        main stream     substream     aspect main/sub
-  #   camera 1 wide        3840x2160        896x512      1.778 / 1.750
-  #   camera 1 telephoto   1920x1080        896x512      1.778 / 1.750
-  #   camera 2 (Duo 2)     4608x1728       1536x576      2.667 / 2.667
+  #   camera 1 (Duo 2)     4608x1728       1536x576      2.667 / 2.667
+  #   camera 2 (Duo 2V)    5120x1552       1920x576      3.299 / 3.333
   #   camera 3 (Duo 2V)    5120x1552       1920x576      3.299 / 3.333
+  #   camera 4 wide        3840x2160        896x512      1.778 / 1.750
+  #   camera 5 wide        3840x2160        896x512      1.778 / 1.750
+  #   camera 5 telephoto   1920x1080        896x512      1.778 / 1.750
   #
   # The two panoramas are not the same shape as each other, so there was never
   # one pair of numbers to hard-code for both; reading it off the stream also
   # keeps a resolution change in the Reolink app from turning into a mismatch
-  # Frigate has to fault on. Camera 1 keeps its explicit pair above, which the
+  # Frigate has to fault on. Camera 5 keeps its explicit pair above, which the
   # measurement confirms.
   #
   # On the last column: boxes are computed on the substream and drawn over the
   # main, so a camera whose two aspects disagree places them slightly off.
-  # Camera 1 is out by 1.56% and has been since the cutover with nobody
-  # noticing, camera 3 by 1.04%, camera 2 not at all. That ranking is the
+  # Camera 5 is out by 1.56% and has been since the cutover with nobody
+  # noticing, camera 2 by 1.04%, camera 1 not at all. That ranking is the
   # measure of how much it matters — do not go chasing it as a Duo defect.
   driveway_duo_2_w:
     friendly_name: Driveway Duo 2 W
@@ -234,13 +250,13 @@ cameras:
     objects:
       track: [horse, person, car, dog]
 
-  # Camera 4 — the paddock, facing north. Mounted on a 2 m galvanised tube
+  # Camera 3 — the paddock, facing north. Mounted on a 2 m galvanised tube
   # clamped to the east corner post of the shipping container that stands
   # along the workshop's north wall, so the lens clears the container instead
   # of looking at it: from the north wall itself the container blanks
   # everything out to roughly 9 m, which is the strip where the horses shelter.
   #
-  # Same fixed dual-lens panorama as camera 3 and the same reasons apply — no
+  # Same fixed dual-lens panorama as camera 2 and the same reasons apply — no
   # onvif block, and detect geometry read off the stream. Probed 2026-09-01: the two
   # are identical stream for stream, 5120x1552 at 8 fps and 3072 kbps main,
   # 1920x576 at 10 fps and 1024 kbps sub.
@@ -262,7 +278,7 @@ cameras:
     objects:
       track: [horse, person, car, dog]
 
-  # Camera 3 — the back yard, facing east, opposite the TrackMix.
+  # Camera 2 — the back yard, facing east, opposite the TrackMix.
   back_yard_duo_2v_e:
     friendly_name: Back Yard Duo 2V E
     ffmpeg:
@@ -280,6 +296,49 @@ cameras:
       fps: 5
     objects:
       track: [horse, person, car, dog]
+
+  # Camera 4 — the workshop's south-east corner, parked on the south-west
+  # approach at about 250 degrees. The wide lens rather than the telephoto,
+  # which is the opposite choice from camera 5 and deliberate: the gap the two
+  # Duo panoramas leave here is open ground, while the gap camera 5 fills is
+  # the narrow strip behind the container. Modelling line of sight against the
+  # workshop and container footprints put the wide channel about four points of
+  # total coverage ahead of the telephoto in this position, and the telephoto
+  # about one point ahead in camera 5's — the two corners want different lenses.
+  #
+  # Encoder settings follow the Duos rather than camera 5: 8 fps at 3072 kbps
+  # on the main stream, so the recording ceiling is 1.38 GB/h instead of 1.84
+  # for the same 384 kbit per frame. The substream runs 10 fps rather than
+  # camera 5's 20, which doubles the bits per frame the detector sees at the
+  # same bitrate and halves what the iGPU has to decode.
+  #
+  # detect.width/height stay unset, as on the Duos and camera 5's telephoto —
+  # Frigate reads the geometry off the stream, so raising the camera's own
+  # setting does not require an edit here.
+  corner_trackmix_se_wide:
+    friendly_name: Corner TrackMix SE
+    ffmpeg:
+      output_args:
+        record: preset-record-generic-audio-aac
+      inputs:
+        - path: rtsp://127.0.0.1:8554/corner_trackmix_se_wide
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/corner_trackmix_se_wide_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+    detect:
+      enabled: true
+      fps: 5
+    objects:
+      track: [horse, person, car, dog]
+    # Manual PTZ from the Frigate UI. Frigate's autotracking stays off for the
+    # same reason as camera 5 — Reolink does not support ONVIF RelativeMove.
+    onvif:
+      host: {{ frigate_camera_4_host }}
+      port: 8000
+      user: {{ frigate_camera_4_username }}
+      password: {{ frigate_camera_4_password }}
 
 record:
   enabled: true
