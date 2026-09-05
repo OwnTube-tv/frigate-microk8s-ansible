@@ -70,6 +70,34 @@ sits in the workshop building:
   percent or two off when drawn over recordings. Camera 1 is the only exact match of the five.
 
 
+Camera LAN Routing
+------------------
+
+The cameras are not on the server's own subnet. The server sits on the VPN-LAN at 192.168.5.10 and
+the cameras on the default LAN, 192.168.4.0/24, so every stream crosses the router at 192.168.5.1.
+What makes that work is a static route on the server:
+
+    192.168.4.0/24 via 192.168.5.1 dev enp3s0 proto static metric 100 onlink
+
+It is declared in `/etc/netplan/60-ethernet.yaml`, and like the encoder settings on the cameras,
+Ansible does not manage it. A rebuild that skips that file loses it.
+
+Loses it *silently*, which is the point of writing this down. The server keeps WiFi as a fallback
+path and that interface sits on 192.168.4.9/24 — the camera subnet, directly connected, with a
+kernel route at metric 600. Drop the static route and nothing fails: the kernel falls through to
+the WiFi route and all five camera streams move onto the wireless link. Recording continues at
+whatever a shared link and three access points can carry, and the only symptom is degradation that
+nobody is watching for.
+
+Checked 2026-09-04, all five cameras leaving through `enp3s0`:
+
+    ip route get 192.168.4.12
+
+This is the same dual-address property that forced the node IP to be pinned for `kubelet` and
+Calico. The machine has two ways to reach almost everything, and in both cases the answer is to say
+which one explicitly rather than leave it to a metric or an autodetection.
+
+
 Camera Encoder Settings
 -----------------------
 
