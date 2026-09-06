@@ -101,11 +101,31 @@ which one explicitly rather than leave it to a metric or an autodetection.
 Camera Encoder Settings
 -----------------------
 
-The numbering changed on 2026-09-04, when it was permuted to follow the addresses. Anything
-written before that — commit messages, pull request descriptions — uses the old scheme, and reads
-across as: 1 → 5, 2 → 1, 3 → 2, 4 → 3, 5 → 4. The camera keys in the Frigate configuration were
-never renumbered, so `trackmix_wide`, `driveway_duo_2_w` and the rest mean the same thing they
-always did and are the safer way to refer to a camera in writing.
+Two identifiers changed in the same week and they are not the same thing.
+
+The **numbering** was permuted on 2026-09-04 to follow the addresses. Anything written before that
+— commit messages, pull request descriptions — uses the old scheme and reads across as
+1 → 5, 2 → 1, 3 → 2, 4 → 3, 5 → 4.
+
+The **Frigate camera keys** are independent of the numbering and did not move with it. Two of them
+moved on 2026-09-06 for a different reason: `trackmix_wide` and `trackmix_tele` were the last keys
+predating the area-model-position convention, and were renamed to `back_yard_trackmix_ne_wide` and
+`back_yard_trackmix_ne_tele` so the whole fleet reads the same way. That was not free — it stranded
+426 recording directories and 2772 event clips, which were deleted deliberately rather than left
+unreachable, and took 172 GB with them. The current keys are:
+
+| Key | Label |
+|-----------------------------|--------------------------------|
+| `driveway_duo_2_w`          | Driveway Duo 2 W               |
+| `back_yard_duo_2v_e`        | Back Yard Duo 2V E             |
+| `back_yard_duo_2v_n`        | Back Yard Duo 2V N             |
+| `corner_trackmix_se_wide`   | Corner TrackMix SE             |
+| `back_yard_trackmix_ne_wide`| Back Yard TrackMix NE (disabled) |
+| `back_yard_trackmix_ne_tele`| Back Yard TrackMix NE (Tele)   |
+
+Keys are still the safer way to name a camera in writing, because a key changes only when someone
+pays for it in footage. Give the label alongside it the first time: the keys are stable, not
+self-explanatory.
 
 These live on the cameras themselves and Ansible does not manage them — a factory reset would
 silently revert them, which is why they are written down here. Verified against each camera's HTTP
