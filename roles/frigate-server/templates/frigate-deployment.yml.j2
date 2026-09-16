@@ -7,7 +7,7 @@ metadata:
     app: frigate
 spec:
   replicas: 1
-  # Single camera source + RWO config volume — never run two Frigates at once
+  # Shared camera sources + RWO config volume — never run two Frigates at once
   strategy:
     type: Recreate
   selector:
@@ -54,6 +54,12 @@ spec:
               mountPath: /dev/bus/usb
             - name: shm
               mountPath: /dev/shm
+            # Recording segments land here before they are muxed into MP4s
+            # under /media/frigate. Without this mount the churn of three
+            # cameras' segments goes to the container's overlay filesystem on
+            # the OS NVMe — memory-backed keeps it off that disk entirely.
+            - name: cache
+              mountPath: /tmp/cache
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -74,4 +80,12 @@ spec:
         - name: shm
           emptyDir:
             medium: Memory
-            sizeLimit: 256Mi
+            # Decoded detection frames, ~6 MB per active camera at the
+            # substream resolutions here plus Frigate's own overhead. 512Mi is
+            # upstream's recommended default and leaves room to enable the
+            # TrackMix telephoto channel without revisiting this.
+            sizeLimit: 512Mi
+        - name: cache
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi

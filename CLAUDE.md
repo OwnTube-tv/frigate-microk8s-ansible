@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This Ansible project configures a single-node MicroK8s server running the
 [Frigate](https://frigate.video) NVR for a horse-monitoring PoC at site `SOC-a264-s5` (Attmarby,
-Sweden). The server, `a264a.mabl.online`, ingests video from a Reolink PoE camera, performs object
-detection (horse/person/car) on the Intel iGPU via OpenVINO, and records to local storage. The web
-UI is published at https://ranchen.owntube.se/ through the MicroK8s ingress with cert-manager
-(Let's Encrypt) TLS, over the site's Starlink uplink.
+Sweden). The server, `a264a.mabl.online`, ingests video from three Reolink PoE cameras, performs
+object detection (horse/person/car) on the Intel iGPU via OpenVINO, and records to local storage.
+The web UI is published at https://ranchen.owntube.se/ through the MicroK8s ingress with
+cert-manager (Let's Encrypt) TLS, over the site's Starlink uplink.
 
 **Design philosophy:** everything above the OS baseline is deployed as Kubernetes manifests
 (cert-manager, ingress, Frigate) rather than docker-compose or bare systemd services. This mirrors
@@ -150,7 +150,10 @@ empties every "other nodes" loop). The meaningful deltas are:
 - **`ansible.cfg`**: roles path, inventory file (`hosts.yaml`), vault password file
 - **`hosts.yaml`**: the `frigate_microk8s_servers` inventory group (single node)
 - **`secrets.yaml`**: Ansible Vault encrypted — camera RTSP/ONVIF credentials and Frigate
-  web UI account passwords
+  web UI account passwords. Camera credentials are numbered per camera
+  (`frigate_camera_<n>_username` / `_password`, n = 1..3) to match the `frigate_camera_<n>_host`
+  defaults in the `frigate-server` role — each Reolink keeps its own user database, so the same
+  account name on three cameras is still three independently rotatable secrets
 
 ## Important Implementation Notes
 
