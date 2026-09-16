@@ -101,6 +101,29 @@ internet → ranchen.owntube.se (87.251.30.65) → router port-forward 443/80
   ClusterIssuer — **deferred until the server is physically at a264**, since ACME HTTP-01
   requires the site's inbound 80/443 path. Do not create issuers or TLS ingresses before then.
 
+### Node Identity and the WiFi Fallback
+
+The server keeps its WiFi interface as a fallback path, because it sits unattended at a remote
+site and losing the cable must not mean losing access. That makes it a machine with two
+addresses, and **Kubernetes does not consult the routing table when deciding which one identifies
+the node** — `kubelet` and Calico each run their own autodetection and can pick the fallback even
+though all ordinary traffic takes the cable. This happened here: before the cluster was rebuilt on
+2026-08-12 the node was registered with its WiFi address as `InternalIP`.
+
+An address that Kubernetes advertises but that can disappear eventually breaks the CNI's path to
+the API server, and without the CNI no pod can start. All three autodetections are therefore
+pinned to the wired address rather than left to guess:
+
+- `--advertise-address` and `kubelet --node-ip`, set by the `microk8s-node` role from
+  `microk8s_node_ip` (a host variable in `hosts.yaml`; the role defaults to the node's
+  default-route address, which is correct for single-homed machines)
+- Calico's `IP_AUTODETECTION_METHOD`, set by the `microk8s-cluster` role from
+  `calico_ip_autodetection_method`
+
+The sibling repo solved the same problem by removing WiFi from its nodes
+(OwnTube-tv/minio-microk8s-ansible#23). That is not an option here — the fallback path is the
+point — so this deployment pins instead.
+
 ### Role Structure
 
 **`microk8s-node`** and **`microk8s-cluster`** are deliberately kept file-diffable against their

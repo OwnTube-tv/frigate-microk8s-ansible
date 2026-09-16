@@ -21,4 +21,8 @@ create_letsencrypt_issuer: yes
 
 create_dashboard_ingress: no
 
+# Calico address autodetection, e.g. 'cidr=192.168.5.0/24'. Empty means leave
+# Calico's own autodetection alone.
+calico_ip_autodetection_method: ''
+
 ...

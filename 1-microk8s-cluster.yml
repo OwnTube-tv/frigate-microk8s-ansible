@@ -24,6 +24,9 @@
       # path forwarded to the ingress — ACME issuance is live. Still no public
       # dashboard at all.
       create_letsencrypt_issuer: yes
+      # The server has a WiFi fallback path, so Calico must not be left to pick
+      # an interface on its own — confine it to the wired VPN-LAN.
+      calico_ip_autodetection_method: cidr=192.168.5.0/24
       create_dashboard_ingress: no
 
 ...

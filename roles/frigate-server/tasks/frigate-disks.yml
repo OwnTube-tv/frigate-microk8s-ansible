@@ -1,0 +1,56 @@
+---
+
+- name: Check if the 'frigate_vg_device' is a block device
+  ansible.builtin.stat:
+    path: "{{ frigate_vg_device }}"
+    # Follow symlinks — /dev/disk/by-id/* paths are links to the real device
+    follow: yes
+  register: frigate_vg_device_stat
+  tags: frigate-disks
+
+- name: Create Frigate storage if 'frigate_vg_device' is available
+  when:
+    - frigate_vg_device_stat.stat.exists
+    - frigate_vg_device_stat.stat.isblk
+  block:
+    - name: Install LVM and XFS packages
+      ansible.builtin.package:
+        name:
+          - lvm2
+          - xfsprogs
+        state: present
+      tags: frigate-disks
+
+    - name: Create 'data-vg' volume group
+      ansible.builtin.lvg: vg=data-vg pvs={{ frigate_vg_device }}
+      tags: frigate-disks
+
+    - name: Create '/dev/data-vg/frigate-lv' spanning the whole volume group
+      ansible.builtin.lvol:
+        vg: data-vg
+        lv: frigate-lv
+        size: 100%VG
+        shrink: false
+      tags: frigate-disks
+
+    - name: Create XFS filesystem on '/dev/data-vg/frigate-lv'
+      ansible.builtin.filesystem:
+        fstype: xfs
+        dev: /dev/data-vg/frigate-lv
+      tags: frigate-disks
+
+    # 'nofail' + short device-timeout — the unattended site server must boot
+    # (quickly) even with a failed recordings disk; SSH access beats
+    # recordings. 'noatime' skips pointless metadata writes under continuous
+    # video recording.
+    - name: Mount XFS filesystem '/dev/data-vg/frigate-lv' as '/srv/frigate' on boot
+      ansible.posix.mount:
+        path: "{{ frigate_data_mount }}"
+        src: /dev/data-vg/frigate-lv
+        fstype: xfs
+        opts: defaults,noatime,nofail,x-systemd.device-timeout=10
+        passno: 2
+        state: mounted
+      tags: frigate-disks
+
+...

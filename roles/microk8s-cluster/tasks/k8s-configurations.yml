@@ -5,6 +5,12 @@
     path: /root/.kube
     state: directory
     mode: 0750
+  # Every kubernetes.core.k8s task below reads this kubeconfig, in check mode
+  # too. Skipping these two would leave whatever an earlier run happened to
+  # write — a stale API server address then fails the dry run before it can
+  # report anything useful. Generating the file changes nothing in the cluster.
+  # Background: OwnTube-tv/minio-microk8s-ansible#23
+  check_mode: no
   tags: microk8s-cluster
 
 - name: Create root kubectl config for the MicroK8s designated host
@@ -12,6 +18,7 @@
   args:
     executable: /bin/bash
   changed_when: no
+  check_mode: no
   tags: microk8s-cluster
 
 - name: Create Let's Encrypt issuer for cert-manager
@@ -25,6 +32,30 @@
   kubernetes.core.k8s:
     definition: "{{ lookup('file', 'coredns-host-access-fallthrough.yml') | from_yaml }}"
     state: present
+  tags: microk8s-cluster
+
+# Calico runs an address autodetection of its own, independent of the kubelet
+# one pinned in the microk8s-node role, and can reach a different conclusion.
+# Confining it to the node network removes the third guess. Leave the variable
+# unset on hosts with a single network path, where guessing cannot go wrong.
+- name: Pin the Calico address autodetection to the node network
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: calico-node
+        namespace: kube-system
+      spec:
+        template:
+          spec:
+            containers:
+              - name: calico-node
+                env:
+                  - name: IP_AUTODETECTION_METHOD
+                    value: "{{ calico_ip_autodetection_method }}"
+  when: calico_ip_autodetection_method | length > 0
   tags: microk8s-cluster
 
 - name: Create ingress for Kubernetes Dashboard, https://k8s-dashboard.owntube.tv

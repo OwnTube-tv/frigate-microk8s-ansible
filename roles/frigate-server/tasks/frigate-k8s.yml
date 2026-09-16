@@ -1,0 +1,74 @@
+---
+
+- name: Create 'frigate' namespace
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: frigate
+    state: present
+  tags: frigate-k8s
+
+- name: Render the Frigate configuration from template
+  ansible.builtin.set_fact:
+    frigate_config: "{{ lookup('template', 'frigate-config.yml.j2') }}"
+  no_log: true
+  tags: frigate-k8s
+
+- name: Create ConfigMap with the Frigate configuration
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: frigate-config-file
+        namespace: frigate
+      data:
+        config.yml: "{{ frigate_config }}"
+    state: present
+  no_log: true
+  tags: frigate-k8s
+
+- name: Create PersistentVolumeClaim for the Frigate database and runtime state
+  kubernetes.core.k8s:
+    definition: "{{ lookup('file', 'frigate-config-pvc.yml') | from_yaml }}"
+    state: present
+  tags: frigate-k8s
+
+- name: Create Frigate Deployment
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'frigate-deployment.yml.j2') | from_yaml }}"
+    state: present
+  tags: frigate-k8s
+
+- name: Create Frigate Service
+  kubernetes.core.k8s:
+    definition: "{{ lookup('file', 'frigate-service.yml') | from_yaml }}"
+    state: present
+  tags: frigate-k8s
+
+- name: Take over 'ranchen.owntube.se' from the whoami test deployment
+  when: frigate_ingress_cutover
+  tags: frigate-k8s
+  block:
+    - name: Remove whoami test resources
+      kubernetes.core.k8s:
+        api_version: "{{ item.api_version }}"
+        kind: "{{ item.kind }}"
+        name: whoami
+        namespace: default
+        state: absent
+      loop:
+        - { api_version: networking.k8s.io/v1, kind: Ingress }
+        - { api_version: v1, kind: Service }
+        - { api_version: apps/v1, kind: Deployment }
+      loop_control:
+        label: "{{ item.kind }}/whoami"
+
+    - name: Create Frigate ingress for https://ranchen.owntube.se
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', 'frigate-ingress.yml') | from_yaml }}"
+        state: present
+
+...

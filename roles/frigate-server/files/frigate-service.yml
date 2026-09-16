@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frigate
+  namespace: frigate
+spec:
+  selector:
+    app: frigate
+  ports:
+    - name: http
+      port: 8971
+      targetPort: 8971

@@ -1,0 +1,15 @@
+---
+
+- hosts: frigate_microk8s_servers
+  become: yes
+  roles:
+    - role: frigate-server
+      frigate_servers_group: frigate_microk8s_servers
+      # Stable by-id path for the Kingston A400 recordings disk (enumeration
+      # order can move /dev/sda; the serial cannot). Verified on a264a.
+      frigate_vg_device: /dev/disk/by-id/ata-KINGSTON_SA400S37960G_50026B73843BA167
+      # Cutover done 2026-08-13: whoami removed, https://ranchen.owntube.se
+      # serves the Frigate UI
+      frigate_ingress_cutover: yes
+
+...

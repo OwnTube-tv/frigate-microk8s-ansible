@@ -1,0 +1,16 @@
+---
+
+# 'throttle: 1' restarts one node at a time even when the play itself runs in
+# parallel. It is redundant on a single-node install, but this role is shared
+# with clustered deployments where a simultaneous control plane restart would
+# cost the cluster its dqlite quorum — and a handler has to be safe for every
+# playbook that can trigger it, not just the one it was written for.
+# Background: OwnTube-tv/minio-microk8s-ansible#23
+- name: Restart MicroK8s kubelite
+  ansible.builtin.service:
+    name: snap.microk8s.daemon-kubelite
+    state: restarted
+  throttle: 1
+  tags: microk8s-node
+
+...

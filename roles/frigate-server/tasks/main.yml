@@ -1,0 +1,11 @@
+---
+
+- name: Configure Frigate recordings disk
+  import_tasks: frigate-disks.yml
+  tags: frigate-disks
+
+- name: Deploy Frigate to the MicroK8s cluster
+  import_tasks: frigate-k8s.yml
+  tags: frigate-k8s
+
+...

@@ -9,5 +9,9 @@ frigate_microk8s_servers:
       ansible_host: 87.251.30.65
       ansible_port: 622
       ansible_user: owntube_ansible
+      # The server keeps WiFi as a fallback path, so it has two addresses and
+      # Kubernetes cannot be left to guess which one identifies the node. Pin
+      # it to the wired VPN-LAN address here, where every playbook picks it up.
+      microk8s_node_ip: 192.168.5.10
 
 ...

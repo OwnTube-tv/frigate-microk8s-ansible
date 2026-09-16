@@ -40,6 +40,30 @@
     designated_host: '{{ (groups[microk8s_servers_group] | sort)[0] }}'
   tags: microk8s-node
 
+# Kubernetes decides a node's identity through its own autodetection, which
+# does not consult the routing table: on a machine with more than one network
+# path it can pick the fallback interface even though all ordinary traffic
+# takes the cable. This node then advertises an address that may disappear,
+# and the CNI loses its way to the API server. Pinning both arguments removes
+# the guesswork. MicroK8s writes neither of them itself, and 'microk8s join'
+# resets the kubelet file, so the playbook is what keeps them true.
+# Background: OwnTube-tv/minio-microk8s-ansible#23
+- name: Pin the API server advertise address to the node address
+  ansible.builtin.lineinfile:
+    path: /var/snap/microk8s/current/args/kube-apiserver
+    regexp: '^--advertise-address='
+    line: '--advertise-address={{ microk8s_node_ip }}'
+  notify: Restart MicroK8s kubelite
+  tags: microk8s-node
+
+- name: Pin the kubelet node address
+  ansible.builtin.lineinfile:
+    path: /var/snap/microk8s/current/args/kubelet
+    regexp: '^--node-ip='
+    line: '--node-ip={{ microk8s_node_ip }}'
+  notify: Restart MicroK8s kubelite
+  tags: microk8s-node
+
 - name: Print message about adding invites for other nodes from the designated/first MicroK8s node
   ansible.builtin.debug:
     msg: |
