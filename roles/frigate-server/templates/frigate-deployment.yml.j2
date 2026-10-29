@@ -55,7 +55,7 @@ spec:
             - name: shm
               mountPath: /dev/shm
             # Recording segments land here before they are muxed into MP4s
-            # under /media/frigate. Without this mount the churn of three
+            # under /media/frigate. Without this mount the churn of four
             # cameras' segments goes to the container's overlay filesystem on
             # the OS NVMe — memory-backed keeps it off that disk entirely.
             - name: cache

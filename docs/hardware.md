@@ -25,11 +25,11 @@ sits in the workshop building:
   (TTL 300, since the DHCP-delivered IP can change with subscription/service changes)
 - **Inter-site connectivity:** IPsec VPN (IKEv2) tunnels to the a12 sites (see the
   [minio-microk8s-ansible](https://github.com/OwnTube-tv/minio-microk8s-ansible) cluster)
-- **Cameras:** three Reolink PoE units on the default LAN, all powered by the PoE switch. They are
+- **Cameras:** four Reolink PoE units on the default LAN, all powered by the PoE switches. They are
   numbered in the Ansible variables (`frigate_camera_<n>_host`, with matching credentials in the
   vault) so that re-aiming or replacing one never means renaming a secret:
     1. **Reolink TrackMix P760** at `192.168.4.6` — "Back Yard TrackMix NE". 4K 8MP PTZ, and the
-       only one of the three that presents its two lenses as independent channels (wide +
+       only one of the four that presents its two lenses as independent channels (wide +
        telephoto), so it is two Frigate cameras; built-in auto-tracking. The wide channel runs
        3840×2160 main, 896×512 substream (16:9), and is switched off: the two Duo panoramas
        overlap and cover that view between them. The telephoto channel is the one recording —
@@ -41,10 +41,19 @@ sits in the workshop building:
     3. **Reolink Duo 2V** at `192.168.4.13` — "Back Yard Duo 2V E". Fixed dual-lens, stitched to a
        single 180° panoramic stream: 5120×1552 main, 1920×576 substream (3.33:1). Faces the
        TrackMix from the opposite side
+    4. **Reolink Duo 2V** at `192.168.4.14` — "Back Yard Duo 2V N", commissioned 2026-09-01. Same
+       model and stitching as camera 3. Mounted on a 2 m galvanised tube clamped to the east
+       corner post of the shipping container that stands along the workshop's north wall, camera
+       roughly 3.4 m above ground. The tube is there because the north wall itself is unusable:
+       the container stands ~5 m out from it and is 2.59 m tall, which blanks the wall camera's
+       view from the wall out to roughly 9 m — exactly the strip where the horses shelter. A lens
+       sitting on top of the container cannot be occluded by it. Streams and encoder settings are
+       identical to camera 3, probed 2026-09-01: 5120×1552 main, 1920×576 substream (3.33:1)
 
-  The two Duos are ~7.95 MP on the main stream against the TrackMix's 8.29 MP, so the measured
-  2.5 GB/h per continuous 4K recorder carries over to them for retention planning. All three main
-  streams are HEVC and all three substreams are H.264, probed over the site VPN on 2026-08-27 —
+  The Duos are ~7.95 MP on the main stream against the TrackMix's 8.29 MP, so the measured
+  2.5 GB/h per continuous 4K recorder carries over to them for retention planning. All four main
+  streams are HEVC and all four substreams H.264, probed over the site VPN on 2026-08-27 and on
+  2026-09-01 for camera 4 —
   so recordings are stream-copied HEVC (Chrome 108+, Edge and Safari play them; other browsers do
   not), while the only decoding the iGPU does is H.264. Every stream carries AAC audio. Note that a
   Reolink substream is not necessarily the same aspect as its main stream — camera 1 is 1.78
@@ -57,7 +66,7 @@ Camera Encoder Settings
 
 These live on the cameras themselves and Ansible does not manage them — a factory reset would
 silently revert them, which is why they are written down here. Verified against each camera's HTTP
-API and with `ffprobe` on the streams on 2026-08-27.
+API and with `ffprobe` on the streams on 2026-08-27, and on 2026-09-01 for camera 4.
 
 | Camera                     | Stream | Resolution | fps | kbps | kbit/frame | kbit/MP | ceiling GB/h |
 |----------------------------|--------|------------|-----|------|------------|---------|--------------|
@@ -69,6 +78,8 @@ API and with `ffprobe` on the streams on 2026-08-27.
 | 2 Duo 2 driveway           | sub    | 1536×576   | 10  | 1024 | 102        | 116     | not recorded |
 | 3 Duo 2V back yard         | main   | 5120×1552  | 8   | 3072 | 384        | 48      | 1.38         |
 | 3 Duo 2V back yard         | sub    | 1920×576   | 10  | 1024 | 102        | 93      | not recorded |
+| 4 Duo 2V paddock north     | main   | 5120×1552  | 8   | 3072 | 384        | 48      | 1.38         |
+| 4 Duo 2V paddock north     | sub    | 1920×576   | 10  | 1024 | 102        | 93      | not recorded |
 
 The bitrate is a ceiling the encoder sits against, so it rather than the resolution is what
 determines disk usage. Frame rate and bitrate therefore have to move together: lowering one alone
