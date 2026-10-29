@@ -121,6 +121,8 @@
       - gcc
       - xsel
       - smartmontools
+      - nvme-cli
+      - lm-sensors
       - ubuntu-server
     autoremove: true
     state: present

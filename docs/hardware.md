@@ -137,8 +137,76 @@ recording started — compare against these to track SSD wear under continuous v
 | Data written      | n/a (no LBA attr on this Phison fw) | 40.8 GB                        |
 | Temperature       | 33 °C (min/max 18/43)               | 50 °C                          |
 
-Read with `sudo smartctl -a /dev/sda` and `sudo smartctl -a /dev/nvme0` (smartmontools is part
-of the common-role baseline).
+Read with `sudo smartctl -a /dev/sda` and `sudo smartctl -a /dev/nvme0`. For the NVMe disk
+`sudo nvme smart-log /dev/nvme0n1` is the better source — `percentage_used`, `warning_temp_time`
+and `critical_comp_time` are NVMe-native counters that SMART does not surface — and it matters
+here because Frigate writes continuously. The Kingston's Phison firmware reports no
+`Total_LBAs_Written`, but it does report erase counts — attributes 244, 245 and 246 — and an
+average erase count is a better wear figure than the normalised `SSD_Life_Left` anyway.
+
+For temperatures, `sensors` prints every thermal zone in one command, each one labelled with the
+chip it belongs to. On this server that is six separate sources:
+
+    coretemp-isa-0000       Package id 0:  +59.0°C    Core 0: +55.0°C   Core 1: +59.0°C
+    pch_skylake-virtual-0   temp1:         +47.0°C
+    acpitz-acpi-0           temp1:         +27.8°C    temp2:  +29.8°C
+    iwlwifi_1-virtual-0     temp1:         +62.0°C
+    nvme-pci-0400           Composite:     +54.9°C    Sensor 1: +73.8°C  Sensor 2: +57.9°C
+
+That spread is the point. The readings run from 27.8 °C to 73.8 °C, the hottest is an NVMe sensor
+rather than the CPU, and the WiFi adapter at 62 °C is warmer than the processor at 59 °C. The
+temperature on the SSH login banner comes from `landscape-sysinfo`, which reads a single unnamed
+zone out of `/sys/class/thermal/` — one number out of the six above, with nothing to say which.
+This server is a fanless MSI Cubi 3 Silent, so there is no fan curve to absorb a thermal problem
+and no fan noise to notice one by.
+
+All three tools are part of the common-role baseline. None of them polls or alerts: they make the
+numbers readable on demand, not noticed on their own.
+
+
+First Follow-Up Reading (2026-08-28)
+------------------------------------
+
+Sixteen days after the baseline, with recording running throughout — one camera for most of it,
+three since 2026-08-27:
+
+| Attribute      | Kingston A400 (recordings) | WD SN7100 (OS)        |
+|----------------|----------------------------|-----------------------|
+| Power-on hours | 23 → 404                   | 22 → 403              |
+| Power cycles   | 21 → 21                    | unchanged             |
+| Wear indicator | SSD_Life_Left 100 → 99     | Percentage Used 0 %   |
+| Erase counts   | average 3, max 4           | n/a                   |
+| Reallocated    | 0 → 0                      | Available Spare 100 % |
+| Temperature    | 33 → 39 °C (max 43 → 49)   | 50 → 55 °C            |
+
+The recordings disk has given up one point of `SSD_Life_Left` and reached an average erase count
+of 3 — nothing, against the thousand-odd program/erase cycles this class of TLC is rated for. Read
+that as an early trend rather than a projection: the write load roughly doubled on 2026-08-27 when
+the camera count went to three, and then fell again when the Duo bitrates were cut, so the rate
+behind this figure is not the rate going forward.
+
+`percentage_used` on the OS disk is still 0 %, which is worth a note. Until 2026-08-27 Frigate's
+`/tmp/cache` sat on the container's overlay filesystem here, so recording segments passed through
+this disk on their way to the SATA one; it now has a memory-backed volume and that traffic is
+gone.
+
+The NVMe reports 9 unsafe shutdowns, and none of them are recent — `uptime` shows an unbroken run
+since the 2026-08-12 baseline and the A400's power-cycle count has not moved. They predate the
+current install and belong to the missing-UPS note above rather than to anything running now.
+
+Six hours later `Total_Erase_Count` had moved from 24 672 to 25 744, or about 179 block erases an
+hour, while `SSD_Life_Left` and `Average_Erase_Count` both sat unchanged at 99 and 3. That is the
+argument for reading the erase counters rather than the normalised figure: they give a rate that
+responds to a change in write load the same day, where `SSD_Life_Left` is a step function that
+will sit at 99 for weeks. Take 179/hour as the baseline for three cameras at the current bitrates
+and compare against it whenever the camera count or the encoder settings move.
+
+Temperatures over the same six hours barely moved — the CPU package held at 59 °C, the chipset
+went 47 to 48, the WiFi adapter 62 to 64, and the NVMe composite 54.9 to 55.9. Steady is the
+expected result for a fanless box under a constant load, and it is the thing to watch for
+departures from. Worth noting which reading is closest to a limit: the NVMe's Sensor 1 at 75.8 °C
+against a 89.8 °C warning threshold, roughly 14 degrees of headroom, and by some margin the
+hottest thing in the chassis.
 
 
 Server Details for `a264a`

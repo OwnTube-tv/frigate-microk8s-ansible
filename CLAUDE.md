@@ -142,7 +142,8 @@ empties every "other nodes" loop). The meaningful deltas are:
 - Configures sysadmin accounts and Ansible service account with SSH key authentication
 - Hardens SSH (no root login, MaxAuthTries 2, AllowUsers whitelist, no password auth for sudoers)
 - Sets timezone to Europe/Stockholm
-- Installs essential packages (incl. smartmontools for SSD health monitoring)
+- Installs essential packages (incl. smartmontools, nvme-cli and lm-sensors — see
+  [docs/hardware.md](docs/hardware.md) for what each one reads)
 - Removes firewalld (conflicts with Calico networking)
 
 ### Configuration Files
