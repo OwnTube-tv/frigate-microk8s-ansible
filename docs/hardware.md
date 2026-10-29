@@ -20,7 +20,7 @@ sits in the workshop building:
 - **Server LAN:** VPN-LAN 192.168.5.0/24, server at 192.168.5.10
 - **WAN:** Starlink Business with public IP `212.105.144.222` via a Starlink Mini dish
   (roof-mounted on the workshop), router in bypass mode. The IP is DHCP-delivered by Starlink and
-  not static: it changed from `87.251.30.65` in October 2026 when the uplink moved from Starlink's
+  not static: it changed from `87.251.30.65` on 2026-10-16 when the uplink moved from Starlink's
   Frankfurt PoP to Stockholm. Expect roughly 50–100 Mbit/s down and 5–20 Mbit/s up through the
   Mini dish
 - **DNS:** `a264a.mabl.online` and `ranchen.owntube.se` are both A records for `212.105.144.222`

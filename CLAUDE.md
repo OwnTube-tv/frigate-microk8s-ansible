@@ -81,10 +81,11 @@ ansible-vault edit secrets.yaml
 | DNS             | `a264a.mabl.online` and `ranchen.owntube.se` → A `212.105.144.222` (TTL 3600)       |
 
 The public IP is DHCP-delivered by Starlink and not static, Business plan or not. It changed from
-`87.251.30.65` to `212.105.144.222` in October 2026 when the uplink moved from Starlink's Frankfurt
-PoP to Stockholm. When it changes again: update both A records at Loopia and `ansible_host` in
-`hosts.yaml`. The Let's Encrypt certificate follows the hostname and needs no action, as long as
-DNS is right before the next renewal.
+`87.251.30.65` to `212.105.144.222` in the early hours of 2026-10-16, when the uplink moved from
+Starlink's Frankfurt PoP to Stockholm; the ingress log shows the last request that arrived by
+hostname at 00:40 local time. When it changes again: update both A records at Loopia and
+`ansible_host` in `hosts.yaml`. The Let's Encrypt certificate follows the hostname and needs no
+action, as long as DNS is right before the next renewal.
 
 ### Ingress Path
 
