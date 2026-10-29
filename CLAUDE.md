@@ -77,13 +77,19 @@ ansible-vault edit secrets.yaml
 | OS disk         | 1 TB NVMe — Ubuntu 24.04 LTS, LVM volume group `ubuntu-vg`                          |
 | Recordings disk | 960 GB SATA SSD — volume group `data-vg`, mounted at `/srv/frigate`                 |
 | Site network    | 192.168.5.10 on the a264 VPN-LAN (192.168.5.0/24, VLAN 5)                           |
-| WAN             | Starlink Business with fixed public IP `87.251.30.65` (bypass mode, DHCP-delivered) |
-| DNS             | `a264a.mabl.online` and `ranchen.owntube.se` → A `87.251.30.65` (TTL 300)           |
+| WAN             | Starlink Business in bypass mode, public IP `212.105.144.222` (DHCP, not static)    |
+| DNS             | `a264a.mabl.online` and `ranchen.owntube.se` → A `212.105.144.222` (TTL 3600)       |
+
+The public IP is DHCP-delivered by Starlink and not static, Business plan or not. It changed from
+`87.251.30.65` to `212.105.144.222` in October 2026 when the uplink moved from Starlink's Frankfurt
+PoP to Stockholm. When it changes again: update both A records at Loopia and `ansible_host` in
+`hosts.yaml`. The Let's Encrypt certificate follows the hostname and needs no action, as long as
+DNS is right before the next renewal.
 
 ### Ingress Path
 
 ```
-internet → ranchen.owntube.se (87.251.30.65) → router port-forward 443/80
+internet → ranchen.owntube.se (212.105.144.222) → router port-forward 443/80
          → MicroK8s nginx ingress (TLS via cert-manager/Let's Encrypt)
          → Frigate Service (port 8971, Frigate built-in authentication)
 ```
@@ -171,7 +177,7 @@ empties every "other nodes" loop). The meaningful deltas are:
 
 - **Secrets management:** all sensitive data in Ansible Vault (`secrets.yaml`). Never commit
   unencrypted secrets or the `.ansible_vault_password` file.
-- **Admin access:** SSH is reachable via the public IP (`87.251.30.65`) on port 622 (router
+- **Admin access:** SSH is reachable via the public IP (`212.105.144.222`) on port 622 (router
   port-forward 622→22), or via the site-to-site VPN at `192.168.5.10:22`. Ports 443/80 are
   forwarded to the MicroK8s ingress.
 - **Web service posture:** the Frigate UI is deliberately availability-first (PoC/demo purpose)

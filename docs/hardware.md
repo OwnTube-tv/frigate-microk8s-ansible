@@ -18,11 +18,13 @@ sits in the workshop building:
 - **Network:** Omada-managed — ER7206 VPN router, TL-SG2210P PoE switch (8× PoE + 2 SFP),
   3× EAP653 Wi-Fi 6 access points spread across three buildings
 - **Server LAN:** VPN-LAN 192.168.5.0/24, server at 192.168.5.10
-- **WAN:** Starlink Business with fixed public IP `87.251.30.65` via a Starlink Mini dish
-  (roof-mounted on the workshop), router in bypass mode. The IP is DHCP-delivered by Starlink —
-  expect roughly 50–100 Mbit/s down and 5–20 Mbit/s up through the Mini dish
-- **DNS:** `a264a.mabl.online` and `ranchen.owntube.se` are both A records for `87.251.30.65`
-  (TTL 300, since the DHCP-delivered IP can change with subscription/service changes)
+- **WAN:** Starlink Business with public IP `212.105.144.222` via a Starlink Mini dish
+  (roof-mounted on the workshop), router in bypass mode. The IP is DHCP-delivered by Starlink and
+  not static: it changed from `87.251.30.65` in October 2026 when the uplink moved from Starlink's
+  Frankfurt PoP to Stockholm. Expect roughly 50–100 Mbit/s down and 5–20 Mbit/s up through the
+  Mini dish
+- **DNS:** `a264a.mabl.online` and `ranchen.owntube.se` are both A records for `212.105.144.222`
+  (TTL 3600 at Loopia; both must be updated by hand when the public IP changes)
 - **Inter-site connectivity:** IPsec VPN (IKEv2) tunnels to the a12 sites (see the
   [minio-microk8s-ansible](https://github.com/OwnTube-tv/minio-microk8s-ansible) cluster)
 - **Cameras:** five Reolink PoE units on the default LAN, all powered by the PoE switches. They are
