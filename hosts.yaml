@@ -4,9 +4,11 @@ frigate_microk8s_servers:
   hosts:
     # a264a.mabl.online — single-node MicroK8s + Frigate NVR at site a264.
     # Public IP with router port-forward 622 -> 22; on the site-to-site VPN
-    # the server is also reachable as 192.168.5.10:22.
+    # the server is also reachable as 192.168.5.10:22. The public IP is
+    # DHCP-delivered by Starlink and not static: it moved from 87.251.30.65
+    # on 2026-10-16, and the two A records at Loopia moved with it.
     node-1:
-      ansible_host: 87.251.30.65
+      ansible_host: 212.105.144.222
       ansible_port: 622
       ansible_user: owntube_ansible
       # The server keeps WiFi as a fallback path, so it has two addresses and
